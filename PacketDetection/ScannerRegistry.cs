@@ -402,6 +402,34 @@ namespace FFXIVOpcodeWizard.PacketDetection
                                packet.Data[Offsets.IpcData + 3] == 0 &&
                                BitConverter.ToUInt32(packet.Data, Offsets.IpcData + 12) == 0);
             //=================
+            RegisterScanner("LoadFurniture", "Please enter a furnished house and exit.",
+                PacketSource.Server,
+                (packet, _) => packet.PacketSize == 2448 &&
+                               packet.Data[Offsets.IpcData] == 0xFF &&
+                               packet.Data[Offsets.IpcData + 7] == 0xFF);
+            //=================
+            RegisterScanner("MoveFurniture", "Please move a furniture to ground.",
+                PacketSource.Client,
+                (packet, _) =>
+                {
+                    if (packet.PacketSize != 64) return false;
+                    var y = BitConverter.ToSingle(packet.Data, Offsets.IpcData + 16);
+                    return Math.Abs(y) < 0.01 || Math.Abs(y + 7) < 0.01;
+                });
+            //=================
+            RegisterScanner("CheckResident", "Please check the resident list at crystal.",
+                PacketSource.Server,
+                (packet, _) => packet.PacketSize == 2440 &&
+                               (packet.Data[Offsets.IpcData + 4] == 0x53 ||
+                               packet.Data[Offsets.IpcData + 4] == 0x54 ||
+                               packet.Data[Offsets.IpcData + 4] == 0x55 ||
+                               packet.Data[Offsets.IpcData + 4] == 0x81));
+            //=================
+            RegisterScanner("CrossWorldChat", "Please wait for another player to say something in your world.",
+                PacketSource.Server, (packet, parameters) =>
+                    packet.PacketSize == 1104 && BitConverter.ToInt16(packet.Data, Offsets.IpcData + 12) ==
+                    int.Parse(parameters[0]), new[] { "Please enter another player's world ID:" });
+            //=================
             RegisterScanner("Effect", "Switch to White Mage, and cast Glare on an enemy. Then wait for a damage tick.",
                 PacketSource.Server,
                 (packet, _) => packet.PacketSize == 156 && BitConverter.ToUInt16(packet.Data, Offsets.IpcData + 8) == 16533);
